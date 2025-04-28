@@ -44,6 +44,13 @@ export default function History() {
     const [filter, setFilter] = useState<"all" | "text" | "image">("all");
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const { width } = useWindowSize();
+    const isWidth = width < 769;
+    const getButtonSizeClass = (width: number) => {
+        if (width < 361) return 'px-2 py-1 text-xs';  // Extra small screens
+        return 'px-4 py-2';                           // Default
+    };
+    const buttonSizeClass = getButtonSizeClass(width);
 
     useEffect(() => {
         if (!user) return;
@@ -164,99 +171,108 @@ export default function History() {
 
             <div className="mt-20 m-5 p-5 border rounded-lg bg-gray-900 border-none">
                 <div className="flex items-center justify-between">
-                    <h1 className="font-bold text-3xl text-white">History</h1>
+                    <h1 className={`font-bold text-white ${isWidth ? "text-xl" : "text-3xl"}`}>History</h1>
                     <Tooltip label="Close History">
-                        <Link to = "/home"><CloseButton size={35} className="text-white hover:bg-transparent hover:text-red-500"/></Link>
+                        <Link to="/home">
+                            {isWidth ? (<CloseButton size={25} className="text-white hover:bg-transparent hover:text-red-500" />)
+                                : (<CloseButton size={35} className="text-white hover:bg-transparent hover:text-red-500" />)}
+                        </Link>
                     </Tooltip>
                 </div>
-                <p className="text-white">See your previously generated contents</p>
+                <p className={`text-white ${isWidth ? "text-xs" : "text-md"}`}>See your previously generated contents</p>
                 <div className="flex gap-4 mt-5 items-center">
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                         <button
-                            className={`px-4 py-2 rounded-lg ${filter === "all" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
+                            className={`${buttonSizeClass} rounded-lg ${filter === "all" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
                             onClick={() => setFilter("all")}
                         >
                             All
                         </button>
                         <button
-                            className={`px-4 py-2 rounded-lg ${filter === "text" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
+                            className={`${buttonSizeClass} rounded-lg ${filter === "text" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
                             onClick={() => setFilter("text")}
                         >
-                            Text Output History
+                            {isWidth ? "Text" : "Text Output History"}
                         </button>
                         <button
-                            className={`px-4 py-2 rounded-lg ${filter === "image" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
+                            className={`${buttonSizeClass} rounded-lg ${filter === "image" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-600 text-gray-300 hover:bg-gray-700"}`}
                             onClick={() => setFilter("image")}
                         >
-                            Image Output History
+                            {isWidth ? "Image" : "Image Output History"}
                         </button>
                     </div>
                     <button
-                        className="ml-auto px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2"
+                        className={`ml-auto ${buttonSizeClass} rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2`}
                         onClick={() => setDeleteModalOpen(true)}
                     >
-                        <Trash2 size={16} />
-                        Delete All History
+                        {isWidth ? (<Trash2 size={16} />)
+                            : (<>
+                                <Trash2 size={16} />
+                                Delete All History
+                            </>
+                            )}
                     </button>
-                </div>
-                <div className="grid grid-cols-7 bg-gray-700 text-white text-center font-bold mt-5 py-3 px-3 rounded-lg">
-                    <h2 className="col-span-2">INPUT</h2>
-                    <h2 className="col-span-2">AI RESPONSE</h2>
-                    <h2>DATE</h2>
-                    <h2>COPY</h2>
-                    <h2>DELETE</h2>
                 </div>
                 {loading ? (
                     <p className="text-gray-500 text-center mt-5">Loading...</p>
                 ) : error ? (
                     <p className="text-gray-500 text-center mt-5">{error}</p>
                 ) : (
-                    <div className="mt-3 overflow-y-auto max-h-[50vh]">
+                    <div className={`mt-5 overflow-y-auto ${width < 769 ? 'overflow-x-auto max-h-[60vh]' : 'max-h-[60vh]'}`}>
                         {history.length === 0 || noEntriesForFilter ? (
                             <p className="text-gray-500 text-center mt-5">{getSectionMessage()}</p>
                         ) : (
-                            filteredHistory.map((entry) => (
-                                <div key={entry._id} className="grid grid-cols-7 text-white text-center mt-2 py-2 px-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-                                    <div className={`col-span-2 px-10 ${entry.type === "text" ? "truncate" : "flex items-center justify-center"}`}>
-                                        {entry.type === "text" ? entry.input : (
-                                            <img
-                                                src={entry.image}
-                                                alt="Processed Input Image"
-                                                className="w-60 h-30 object-cover rounded-lg"
-                                            />
-                                        )}
-                                    </div>
-                                    <div className={`col-span-2 px-10 ${entry.type === "text" ? "truncate" : "flex items-center justify-center"}`}>
-                                        {entry.type === "text"
-                                            ? entry.output
-                                            : entry.responses?.length > 0
-                                                ? JSON.stringify(`${entry.responses[0]?.expr ?? "N/A"} = ${entry.responses[0]?.result ?? "N/A"}`)
-                                                : "No response available"}
-
-                                    </div>
-                                    <p className="flex items-center justify-center">{entry.date}</p>
-                                    <button className="flex items-center justify-center transition-all duration-300"
-                                        onClick={() => handleCopy(
-                                            entry.type === "text"
+                            <div className={`${width < 769 ? 'min-w-[800px]' : ''}`}>
+                                <div className="grid grid-cols-7 bg-gray-700 text-white text-center font-bold py-3 px-3 rounded-lg">
+                                    <h2 className={`${width < 769 ? 'text-xs' : ''} col-span-2`}>INPUT</h2>
+                                    <h2 className={`${width < 769 ? 'text-xs' : ''} col-span-2`}>RESPONSE</h2>
+                                    <h2 className={`${width < 769 ? 'text-xs' : ''}`}>DATE</h2>
+                                    <h2 className={`${width < 769 ? 'text-xs' : ''}`}>COPY</h2>
+                                    <h2 className={`${width < 769 ? 'text-xs' : ''}`}>DELETE</h2>
+                                </div>
+                                {filteredHistory.map((entry) => (
+                                    <div
+                                        key={entry._id}
+                                        className={`grid grid-cols-7 text-white text-center mt-2 py-2 px-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700`}
+                                    >
+                                        <div className={`${width < 769 ? 'text-xs' : ''} col-span-2 px-2 ${entry.type === "text" ? "truncate" : "flex items-center justify-center"}`}>
+                                            {entry.type === "text" ? entry.input : (
+                                                <img
+                                                    src={entry.image}
+                                                    alt="Processed Input Image"
+                                                    className={`${width < 769 ? 'w-40 h-20' : 'w-60 h-30'} object-cover rounded-lg`}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className={`${width < 769 ? 'text-xs' : ''} col-span-2 px-2 ${entry.type === "text" ? "truncate" : "flex items-center justify-center"}`}>
+                                            {entry.type === "text"
                                                 ? entry.output
                                                 : entry.responses?.length > 0
                                                     ? JSON.stringify(`${entry.responses[0]?.expr ?? "N/A"} = ${entry.responses[0]?.result ?? "N/A"}`)
-                                                    : "No response available",
-                                            entry._id
-                                        )}
-
-                                    >
-                                        {copiedId === entry._id ? (
-                                            <Check className="w-4 h-4 transition-all duration-300 text-green-500" />
-                                        ) : (
-                                            <Clipboard className="w-4 h-4 transition-all duration-300 hover:text-gray-400" />
-                                        )}
-                                    </button>
-                                    <button className="flex items-center justify-center" onClick={() => handleDelete(entry._id, entry.type)}>
-                                        <Trash2 size={20} className="cursor-pointer hover:text-red-500" />
-                                    </button>
-                                </div>
-                            ))
+                                                    : "No response available"}
+                                        </div>
+                                        <p className={`${width < 769 ? 'text-xs' : ''} flex items-center justify-center px-2`}>{entry.date}</p>
+                                        <button className={`${width < 769 ? 'text-xs' : ''} flex items-center justify-center transition-all duration-300`}
+                                            onClick={() => handleCopy(
+                                                entry.type === "text"
+                                                    ? entry.output
+                                                    : entry.responses?.length > 0
+                                                        ? JSON.stringify(`${entry.responses[0]?.expr ?? "N/A"} = ${entry.responses[0]?.result ?? "N/A"}`)
+                                                        : "No response available",
+                                                entry._id
+                                            )}>
+                                            {copiedId === entry._id ? (
+                                                <Check className="w-4 h-4 transition-all duration-300 text-green-500" />
+                                            ) : (
+                                                <Clipboard className="w-4 h-4 transition-all duration-300 hover:text-gray-400" />
+                                            )}
+                                        </button>
+                                        <button className={`${width < 769 ? 'text-xs' : ''} flex items-center justify-center`} onClick={() => handleDelete(entry._id, entry.type)}>
+                                            <Trash2 size={20} className="cursor-pointer hover:text-red-500" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}
