@@ -17,7 +17,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://intuitiq01.netlify.app",  # Your Netlify URL
-        "http://localhost:3000",                  # For local development
+        "*",                  # For local development
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,8 +33,8 @@ app.include_router(image_history_router, prefix="/image_history", tags=["image_h
 app.include_router(text_router, prefix="/text_calculate", tags=["text"])
 app.include_router(text_history_router, prefix="/text_history", tags=["text_history"])
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host=SERVER_URL, port=int(PORT), reload=(ENV == "dev"))
-
 # if __name__ == "__main__":
-#     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
+#     uvicorn.run("main:app", host=SERVER_URL, port=int(PORT), reload=(ENV == "dev"))
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
